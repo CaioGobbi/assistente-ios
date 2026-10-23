@@ -5,9 +5,16 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 xcodegen generate
-xcodebuild -project Assistente.xcodeproj -scheme Assistente -configuration Release \
+mkdir -p build
+LOG="build/xcodebuild.log"
+if ! xcodebuild -project Assistente.xcodeproj -scheme Assistente -configuration Release \
   -sdk iphoneos -destination 'generic/platform=iOS' -derivedDataPath build \
-  CODE_SIGNING_ALLOWED=NO build | tail -n 50
+  CODE_SIGNING_ALLOWED=NO build > "$LOG" 2>&1; then
+  # No GitHub Actions, cada erro vira uma anotação visível no PR.
+  grep -E ": error:" "$LOG" | sort -u | head -n 40 | sed 's/^/::error::/' || true
+  tail -n 40 "$LOG"
+  exit 1
+fi
 
 APP="build/Build/Products/Release-iphoneos/Assistente.app"
 [ -d "$APP" ] || { echo "Build falhou: $APP não existe." >&2; exit 1; }
