@@ -26,6 +26,8 @@ targets:
         UIApplicationSupportsIndirectInputEvents: true
         UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
         UIBackgroundModes: [fetch]
+        NSMicrophoneUsageDescription: Para você mandar áudio pro Tomoshibi na conversa.
+        NSSpeechRecognitionUsageDescription: Para transformar seu áudio em texto antes de mandar pro Tomoshibi.
         BGTaskSchedulerPermittedIdentifiers: [com.caiogobbi.assistente.briefing]
     settings:
       base:
