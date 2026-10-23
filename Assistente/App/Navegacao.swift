@@ -7,8 +7,8 @@ import Observation
 final class Navegacao {
     static let shared = Navegacao()
 
-    enum Aba { case hoje, assistente, ajustes }
-    enum Pedido { case planejar, fecharDia }
+    enum Aba { case hoje, gastos, assistente, ajustes }
+    enum Pedido { case planejar, fecharDia, analisarGastos }
 
     var aba = Aba.hoje
     /// Consumido pela RaizView, que repassa ao assistente.

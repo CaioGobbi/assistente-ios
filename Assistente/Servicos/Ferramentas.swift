@@ -1,7 +1,7 @@
 import Foundation
 import SwiftData
 
-/// Ferramentas que o Claude usa para ler e mexer nas tarefas.
+/// Ferramentas que o Claude usa para ler e mexer nas tarefas e consultar os gastos.
 @MainActor
 struct Ferramentas {
     let context: ModelContext
@@ -58,6 +58,18 @@ struct Ferramentas {
             "description": "Apaga um fato da memória que mudou ou ficou desatualizado, pelo id mostrado na memória.",
             "input_schema": ["type": "object", "properties": ["id": ["type": "string"]], "required": ["id"]],
         ],
+        [
+            "name": "consultar_gastos",
+            "description": "Resume as transações do banco num período: total gasto, entradas, gastos por categoria, maiores gastos e a lista de lançamentos. Valores negativos são saídas. Sem datas, pega os últimos 30 dias.",
+            "input_schema": [
+                "type": "object",
+                "properties": [
+                    "de": ["type": "string", "description": "Primeiro dia, AAAA-MM-DD."],
+                    "ate": ["type": "string", "description": "Último dia (incluso), AAAA-MM-DD."],
+                    "busca": ["type": "string", "description": "Filtra por texto na descrição, categoria ou conta (ex.: ifood, uber, mercado)."],
+                ],
+            ],
+        ],
     ]
 
     // MARK: Execução
@@ -73,6 +85,7 @@ struct Ferramentas {
             case "excluir_tarefa": saida = try excluir(entrada)
             case "lembrar": saida = try lembrar(entrada)
             case "esquecer": saida = try esquecer(entrada)
+            case "consultar_gastos": saida = try consultarGastos(entrada)
             default: throw FalhaFerramenta("Ferramenta desconhecida: \(nome)")
             }
             try context.save()
@@ -161,6 +174,74 @@ struct Ferramentas {
         context.delete(lembranca)
         return ["esquecido": .string(texto)]
     }
+
+    private static let limiteLancamentos = 150
+
+    private func consultarGastos(_ e: JSONValue) throws -> JSONValue {
+        let cal = Calendar.current
+        let hoje = cal.startOfDay(for: .now)
+        let inicio = try e["de"]?.string.map(diaGastos) ?? cal.date(byAdding: .day, value: -29, to: hoje)!
+        let ultimo = try e["ate"]?.string.map(diaGastos) ?? hoje
+        let fim = cal.date(byAdding: .day, value: 1, to: ultimo)!
+
+        var todas = try context.fetch(FetchDescriptor<Transacao>(predicate: #Predicate { $0.data >= inicio && $0.data < fim }))
+        if let busca = e["busca"]?.string?.trimmingCharacters(in: .whitespaces), !busca.isEmpty {
+            todas = todas.filter {
+                $0.descricao.localizedCaseInsensitiveContains(busca)
+                    || $0.categoriaExibida.localizedCaseInsensitiveContains(busca)
+                    || $0.conta.localizedCaseInsensitiveContains(busca)
+            }
+        }
+        let r = ResumoGastos(todas, de: inicio, ate: fim)
+        let ultimaSync = UserDefaults.standard.double(forKey: Banco.chaveUltimaSync)
+        let categorias: [JSONValue] = r.porCategoria.map { g in
+            ["categoria": .string(g.nome), "total": .number(arredondar(g.total)), "quantidade": .number(Double(g.quantidade))]
+        }
+        let maiores = r.transacoes.filter(\.gasto).sorted { $0.valor < $1.valor }.prefix(10)
+
+
+        var saida: [String: JSONValue] = [
+            "periodo": .string("\(Formatos.dia.string(from: inicio)) a \(Formatos.dia.string(from: ultimo))"),
+            "total_gasto": .number(arredondar(r.totalGasto)),
+            "total_entradas": .number(arredondar(r.totalEntrada)),
+            "media_gasto_por_dia": .number(arredondar(r.mediaPorDia)),
+            "quantidade_lancamentos": .number(Double(r.transacoes.count)),
+            "por_categoria": .array(categorias),
+            "maiores_gastos": .array(maiores.map(lancamento)),
+            "lancamentos": .array(r.transacoes.prefix(Self.limiteLancamentos).map(lancamento)),
+            "obs": "Pagamentos de fatura do cartão ficam fora dos totais para não contar a mesma compra duas vezes.",
+        ]
+        if r.transacoes.count > Self.limiteLancamentos {
+            saida["lancamentos_omitidos"] = .number(Double(r.transacoes.count - Self.limiteLancamentos))
+        }
+        if ultimaSync > 0 {
+            saida["banco_sincronizado_em"] = .string(Formatos.agora(Date(timeIntervalSince1970: ultimaSync)))
+        }
+        if r.transacoes.isEmpty {
+            saida["aviso"] = "Nenhuma transação nesse período. O usuário pode conectar o banco (Meu Pluggy) ou importar um extrato na aba Gastos."
+        }
+        return .object(saida)
+    }
+
+    private func diaGastos(_ texto: String) throws -> Date {
+        guard let d = Formatos.dia.date(from: texto) else { throw FalhaFerramenta("Data inválida '\(texto)'. Use AAAA-MM-DD.") }
+        return Calendar.current.startOfDay(for: d)
+    }
+
+    private func lancamento(_ t: Transacao) -> JSONValue {
+        var o: [String: JSONValue] = [
+            "data": .string(Formatos.dia.string(from: t.data)),
+            "descricao": .string(t.descricao),
+            "valor": .number(arredondar(t.valor)),
+            "categoria": .string(t.categoriaExibida),
+            "conta": .string(t.conta),
+        ]
+        if t.pendente { o["pendente"] = true }
+        if t.pagamentoDeFatura { o["pagamento_de_fatura"] = true }
+        return .object(o)
+    }
+
+    private func arredondar(_ v: Double) -> Double { (v * 100).rounded() / 100 }
 
     // MARK: Apoio
 

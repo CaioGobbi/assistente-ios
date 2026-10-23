@@ -15,6 +15,13 @@ struct RaizView: View {
             .tabItem { Label("Hoje", systemImage: "sun.max") }
             .tag(Navegacao.Aba.hoje)
 
+            GastosView(
+                analisar: { nav.aba = .assistente; nav.pedido = .analisarGastos },
+                abrirAjustes: { nav.aba = .ajustes }
+            )
+            .tabItem { Label("Gastos", systemImage: "creditcard") }
+            .tag(Navegacao.Aba.gastos)
+
             ConversaView(abrirAjustes: { nav.aba = .ajustes })
                 .tabItem { Label("Assistente", systemImage: "sparkles") }
                 .tag(Navegacao.Aba.assistente)
@@ -26,7 +33,7 @@ struct RaizView: View {
         .onReceive(NotificationCenter.default.publisher(for: ModelContext.didSave)) { _ in
             Notificacoes.reagendarTudo()
         }
-        // Tocou no resumo da manhã ou no check-in: a conversa já começa no assunto.
+        // Tocou no resumo da manhã, no check-in ou em "Analisar": a conversa já começa no assunto.
         .onChange(of: nav.pedido, initial: true) { _, pedido in
             guard let pedido else { return }
             nav.pedido = nil
@@ -34,6 +41,7 @@ struct RaizView: View {
                 switch pedido {
                 case .planejar: await assistente.planejarDia()
                 case .fecharDia: await assistente.fecharDia()
+                case .analisarGastos: await assistente.analisarGastos()
                 }
             }
         }

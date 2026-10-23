@@ -12,8 +12,9 @@ Feito para uso pessoal, instalado fora da App Store com conta Apple grátis.
 - **Notificações**: resumo da manhã (escrito pelo Claude quando o iOS deixa o app rodar em segundo plano), check-in da noite e aviso na hora de cada tarefa, com botões Feito, Adiar 1h e Amanhã. Tocar no resumo ou no check-in abre a conversa já no assunto.
 - **Siri**: "Anotar no Assistente" cria uma tarefa para hoje.
 - Tarefas que repetem (todo dia, dias úteis, toda semana).
+- **Gastos**: puxa as transações dos seus bancos pelo Meu Pluggy (Open Finance, só leitura) ou de um extrato OFX/CSV. Mostra quanto gastou no período, por categoria e dia a dia, e o assistente analisa ("quanto foi de iFood esse mês?").
 
-Os dados ficam só no iPhone (SwiftData). A chave da API fica no Keychain.
+Os dados ficam só no iPhone (SwiftData). As chaves (Claude e Pluggy) ficam no Keychain.
 
 ## Instalar (sem pagar a Apple)
 
@@ -42,14 +43,27 @@ Nesse modo, a cada 7 dias é só dar Run de novo; os dados continuam.
 Na aba **Ajustes**: seu nome, a chave da API do Claude ([console.anthropic.com](https://console.anthropic.com), cobrada por uso) e os horários do resumo e do check-in.
 O modelo padrão é o Opus 5.5; o Haiku 5.5 sai bem mais barato se quiser economizar.
 
+### Banco (Meu Pluggy, grátis)
+
+1. Crie uma conta em [dashboard.pluggy.ai](https://dashboard.pluggy.ai) e uma **aplicação**. Copie o **Client ID** e o **Client Secret**.
+2. Conecte seus bancos pelo **Meu Pluggy**, seguindo as instruções da Pluggy. É o Open Finance oficial: você autoriza no app do banco e o acesso é só de leitura.
+3. No dashboard, abra a aplicação, **Ir para Demo**, menu de três pontos, **Copiar Item ID**. Cada banco conectado tem o seu.
+4. No app, **Ajustes > Banco**: cole Client ID, Secret e os Item IDs (separados por vírgula) e toque em **Testar conexão**.
+
+A aba **Gastos** sincroniza sozinha a cada 6 horas (ou puxe a lista para baixo). Na primeira vez traz os últimos 90 dias.
+Pagamento de fatura fica fora dos totais, porque as compras já contam no cartão.
+
+Sem Pluggy, dá para usar **Importar extrato**: exporte o extrato em OFX ou CSV no app ou site do banco e escolha o arquivo.
+Importar o mesmo arquivo de novo não duplica nada.
+
 ## Código
 
 ```
 Assistente/
   App/        entrada do app, preferências, formatos de data
-  Modelos/    Tarefa (SwiftData) e Agenda (como o dia é dividido)
-  Servicos/   cliente da API do Claude, ferramentas, laço do assistente, notificações, Keychain
-  Telas/      Hoje, Assistente, Ajustes, edição de tarefa
+  Modelos/    Tarefa e Transacao (SwiftData), Agenda (como o dia é dividido)
+  Servicos/   clientes do Claude e da Pluggy, extrato OFX/CSV, ferramentas, laço do assistente, notificações, Keychain
+  Telas/      Hoje, Gastos, Assistente, Ajustes, edição de tarefa
   Intents/    atalho da Siri
 project.yml   projeto do XcodeGen (o .xcodeproj é gerado, não vai pro git)
 ```

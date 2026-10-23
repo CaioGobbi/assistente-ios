@@ -70,7 +70,7 @@ final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCent
 enum Persistencia {
     static let container: ModelContainer = {
         do {
-            return try ModelContainer(for: Tarefa.self, Lembranca.self, Fala.self)
+            return try ModelContainer(for: Tarefa.self, Lembranca.self, Fala.self, Transacao.self)
         } catch {
             fatalError("Não foi possível abrir o banco de dados: \(error)")
         }

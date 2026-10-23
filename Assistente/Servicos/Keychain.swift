@@ -3,6 +3,9 @@ import Security
 
 enum Keychain {
     static let contaAPI = "anthropic-api-key"
+    static let contaPluggyID = "pluggy-client-id"
+    static let contaPluggySecret = "pluggy-client-secret"
+    static let contaPluggyItens = "pluggy-item-ids"
     private static let servico = "com.caiogobbi.assistente"
 
     static func ler(_ conta: String) -> String? {
