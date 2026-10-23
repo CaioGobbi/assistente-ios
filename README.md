@@ -1,6 +1,8 @@
-# Assistente
+# 灯火 Tomoshibi
 
-App de iPhone que cuida das suas tarefas e da sua rotina, com o Claude como assistente.
+![Ícone](design/icone/previa.png)
+
+"Chama da lamparina" em japonês. App de iPhone que cuida das suas tarefas e da sua rotina, com o Claude como assistente.
 Feito para uso pessoal, instalado fora da App Store com conta Apple grátis.
 
 ## O que faz
@@ -10,7 +12,7 @@ Feito para uso pessoal, instalado fora da App Store com conta Apple grátis.
 - **Memória**: o assistente guarda o que aprende sobre você (rotina, preferências, metas) e usa em toda conversa. Dá pra ver e editar em Ajustes.
 - **Conversa contínua**: o histórico fica salvo; o contexto enviado ao Claude recomeça a cada dia e a memória faz a ponte.
 - **Notificações**: resumo da manhã (escrito pelo Claude quando o iOS deixa o app rodar em segundo plano), check-in da noite e aviso na hora de cada tarefa, com botões Feito, Adiar 1h e Amanhã. Tocar no resumo ou no check-in abre a conversa já no assunto.
-- **Siri**: "Anotar no Assistente" cria uma tarefa para hoje.
+- **Siri**: "Anotar no Tomoshibi" cria uma tarefa para hoje.
 - Tarefas que repetem (todo dia, dias úteis, toda semana).
 - **Gastos**: puxa as transações dos seus bancos pelo Meu Pluggy (Open Finance, só leitura) ou de um extrato OFX/CSV. Mostra quanto gastou no período, por categoria e dia a dia, e o assistente analisa ("quanto foi de iFood esse mês?").
 
