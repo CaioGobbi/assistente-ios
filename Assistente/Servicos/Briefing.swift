@@ -23,7 +23,7 @@ enum Briefing {
     }
 
     static func texto(para dia: Date, doDia: [Tarefa]) -> String? {
-        guard let dados = UserDefaults.standard.data(forKey: chave(dia)),
+        guard let dados = UserDefaults.standard.data(forKey: chaveDoDia(dia)),
               let salvo = try? JSONDecoder().decode(Salvo.self, from: dados),
               salvo.assinatura == assinatura(doDia) else { return nil }
         return salvo.texto
@@ -88,11 +88,11 @@ enum Briefing {
             .trimmingCharacters(in: .whitespacesAndNewlines)
         guard !texto.isEmpty,
               let dados = try? JSONEncoder().encode(Salvo(texto: texto, assinatura: assinatura(doDia))) else { return }
-        defaults.set(dados, forKey: chave(dia))
+        defaults.set(dados, forKey: chaveDoDia(dia))
         await Notificacoes.aplicar()
     }
 
-    private static func chave(_ dia: Date) -> String {
+    private static func chaveDoDia(_ dia: Date) -> String {
         "briefing-\(Formatos.dia.string(from: dia))"
     }
 
