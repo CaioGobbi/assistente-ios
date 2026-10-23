@@ -16,7 +16,19 @@ struct AssistenteApp: App {
         }
         .modelContainer(Persistencia.container)
         .onChange(of: scenePhase) { _, fase in
-            if fase == .active { Notificacoes.reagendarTudo() }
+            switch fase {
+            case .active:
+                Notificacoes.reagendarTudo()
+                Task { await Briefing.gerarSePreciso() }
+            case .background:
+                Briefing.agendar()
+            default:
+                break
+            }
+        }
+        .backgroundTask(.appRefresh(Briefing.tarefaID)) {
+            await Briefing.gerarSePreciso()
+            await Briefing.agendar()
         }
     }
 }
@@ -31,13 +43,19 @@ final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCent
         return true
     }
 
-    // Botões da notificação (Feito, Adiar 1h, Amanhã...). Roda sem abrir o app.
+    // Toque na notificação abre o app no lugar certo; os botões (Feito, Adiar 1h...) rodam sem abrir.
     func userNotificationCenter(
         _ center: UNUserNotificationCenter,
         didReceive response: UNNotificationResponse
     ) async {
-        let tarefaID = response.notification.request.content.userInfo["tarefa"] as? String
-        await Notificacoes.responder(acao: response.actionIdentifier, tarefaID: tarefaID)
+        let info = response.notification.request.content.userInfo
+        let tipo = info["tipo"] as? String
+        let tarefaID = info["tarefa"] as? String
+        if response.actionIdentifier == UNNotificationDefaultActionIdentifier {
+            await Navegacao.shared.abrir(tipo: tipo)
+        } else {
+            await Notificacoes.responder(acao: response.actionIdentifier, tarefaID: tarefaID)
+        }
     }
 
     // Mostra o lembrete mesmo com o app aberto.
@@ -52,7 +70,7 @@ final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCent
 enum Persistencia {
     static let container: ModelContainer = {
         do {
-            return try ModelContainer(for: Tarefa.self)
+            return try ModelContainer(for: Tarefa.self, Lembranca.self, Fala.self)
         } catch {
             fatalError("Não foi possível abrir o banco de dados: \(error)")
         }

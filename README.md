@@ -7,7 +7,9 @@ Feito para uso pessoal, instalado fora da App Store com conta Apple grátis.
 
 - **Hoje**: o que fazer agora, atrasadas, tarefas do dia, próximos dias. Deslize para concluir, adiar ou apagar.
 - **Assistente**: conversa com o Claude, que lê e mexe nas suas tarefas. "Planejar meu dia" monta o plano encaixando horários e prioridades.
-- **Notificações**: resumo da manhã, check-in da noite e aviso na hora de cada tarefa. Tudo agendado no próprio iPhone.
+- **Memória**: o assistente guarda o que aprende sobre você (rotina, preferências, metas) e usa em toda conversa. Dá pra ver e editar em Ajustes.
+- **Conversa contínua**: o histórico fica salvo; o contexto enviado ao Claude recomeça a cada dia e a memória faz a ponte.
+- **Notificações**: resumo da manhã (escrito pelo Claude quando o iOS deixa o app rodar em segundo plano), check-in da noite e aviso na hora de cada tarefa, com botões Feito, Adiar 1h e Amanhã. Tocar no resumo ou no check-in abre a conversa já no assunto.
 - **Siri**: "Anotar no Assistente" cria uma tarefa para hoje.
 - Tarefas que repetem (todo dia, dias úteis, toda semana).
 

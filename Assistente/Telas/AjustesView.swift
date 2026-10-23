@@ -23,6 +23,11 @@ struct AjustesView: View {
             Form {
                 Section("Você") {
                     TextField("Seu nome", text: $nome)
+                    NavigationLink {
+                        MemoriaView()
+                    } label: {
+                        Label("O que ele sabe de você", systemImage: "brain")
+                    }
                 }
 
                 Section {

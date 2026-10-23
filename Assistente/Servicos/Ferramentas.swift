@@ -48,6 +48,16 @@ struct Ferramentas {
             "description": "Apaga uma tarefa de vez. Só use se o usuário pedir para apagar ou desistir dela.",
             "input_schema": ["type": "object", "properties": ["id": ["type": "string"]], "required": ["id"]],
         ],
+        [
+            "name": "lembrar",
+            "description": "Guarda um fato duradouro sobre o usuário (rotina, preferência, meta, pessoa). Um fato curto por chamada.",
+            "input_schema": ["type": "object", "properties": ["texto": ["type": "string"]], "required": ["texto"]],
+        ],
+        [
+            "name": "esquecer",
+            "description": "Apaga um fato da memória que mudou ou ficou desatualizado, pelo id mostrado na memória.",
+            "input_schema": ["type": "object", "properties": ["id": ["type": "string"]], "required": ["id"]],
+        ],
     ]
 
     // MARK: Execução
@@ -61,6 +71,8 @@ struct Ferramentas {
             case "atualizar_tarefa": saida = try atualizar(entrada)
             case "concluir_tarefa": saida = try concluir(entrada)
             case "excluir_tarefa": saida = try excluir(entrada)
+            case "lembrar": saida = try lembrar(entrada)
+            case "esquecer": saida = try esquecer(entrada)
             default: throw FalhaFerramenta("Ferramenta desconhecida: \(nome)")
             }
             try context.save()
@@ -131,6 +143,23 @@ struct Ferramentas {
         let titulo = t.titulo
         context.delete(t)
         return ["excluida": .string(titulo)]
+    }
+
+    private func lembrar(_ e: JSONValue) throws -> JSONValue {
+        let texto = e["texto"]?.string?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        guard !texto.isEmpty else { throw FalhaFerramenta("Faltou o texto.") }
+        let lembranca = Lembranca(texto: texto)
+        context.insert(lembranca)
+        return ["guardado": .string(lembranca.id.uuidString)]
+    }
+
+    private func esquecer(_ e: JSONValue) throws -> JSONValue {
+        guard let texto = e["id"]?.string, let alvo = UUID(uuidString: texto) else { throw FalhaFerramenta("id inválido.") }
+        var descritor = FetchDescriptor<Lembranca>(predicate: #Predicate { $0.id == alvo })
+        descritor.fetchLimit = 1
+        guard let lembranca = try context.fetch(descritor).first else { throw FalhaFerramenta("Esse fato não existe.") }
+        context.delete(lembranca)
+        return ["esquecido": .string(texto)]
     }
 
     // MARK: Apoio

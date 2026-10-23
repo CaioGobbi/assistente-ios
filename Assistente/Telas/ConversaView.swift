@@ -5,6 +5,7 @@ struct ConversaView: View {
 
     @Environment(Assistente.self) private var assistente
     @State private var texto = ""
+    @State private var confirmandoApagar = false
 
     private let sugestoes = [
         "Monta meu plano de hoje.",
@@ -24,6 +25,7 @@ struct ConversaView: View {
                     }
                     .padding()
                 }
+                .defaultScrollAnchor(.bottom)
                 .scrollDismissesKeyboard(.interactively)
                 .onChange(of: assistente.mensagens.count) {
                     guard let ultima = assistente.mensagens.last?.id else { return }
@@ -37,8 +39,15 @@ struct ConversaView: View {
             .navigationTitle("Assistente")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                Button("Nova conversa", systemImage: "square.and.pencil") { assistente.novaConversa() }
-                    .disabled(assistente.pensando || assistente.mensagens.isEmpty)
+                Menu("Mais", systemImage: "ellipsis.circle") {
+                    Button("Apagar conversa", systemImage: "trash", role: .destructive) { confirmandoApagar = true }
+                }
+                .disabled(assistente.pensando || assistente.mensagens.isEmpty)
+            }
+            .confirmationDialog("Apagar a conversa?", isPresented: $confirmandoApagar, titleVisibility: .visible) {
+                Button("Apagar", role: .destructive) { assistente.apagarConversa() }
+            } message: {
+                Text("A memória e as tarefas continuam.")
             }
         }
     }

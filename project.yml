@@ -21,6 +21,8 @@ targets:
         UILaunchScreen: {}
         UIApplicationSupportsIndirectInputEvents: true
         UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
+        UIBackgroundModes: [fetch]
+        BGTaskSchedulerPermittedIdentifiers: [com.caiogobbi.assistente.briefing]
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.caiogobbi.assistente

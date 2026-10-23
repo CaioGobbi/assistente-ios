@@ -17,6 +17,12 @@ enum Notificacoes {
         static let empurrarDia = "EMPURRAR_DIA"
     }
 
+    /// Que notificação foi tocada, para abrir o app no lugar certo.
+    enum Tipo {
+        static let briefing = "briefing"
+        static let checkin = "checkin"
+    }
+
     private enum Categoria {
         static let tarefa = "TAREFA"
         static let checkin = "CHECKIN"
@@ -74,7 +80,7 @@ enum Notificacoes {
         }
     }
 
-    private static func aplicar() async {
+    static func aplicar() async {
         let tarefas = (try? Persistencia.container.mainContext.fetch(FetchDescriptor<Tarefa>())) ?? []
         let pedidos = montarPedidos(tarefas, prefs: .atual)
         let centro = UNUserNotificationCenter.current()
@@ -100,7 +106,7 @@ enum Notificacoes {
         for t in comHorario {
             let corpo = t.notas.isEmpty ? "Tá na hora." : t.notas
             pedidos.append(pedido("tarefa-\(t.id.uuidString)", titulo: t.titulo, corpo: corpo, em: t.data!, cal: cal,
-                                  categoria: Categoria.tarefa, grupo: "tarefas", tarefaID: t.id.uuidString))
+                                  categoria: Categoria.tarefa, grupo: "tarefas", info: ["tarefa": t.id.uuidString]))
         }
 
         // Resumo da manhã e check-in da noite.
@@ -111,15 +117,16 @@ enum Notificacoes {
             let atrasadas = deslocamento == 0 ? agenda.atrasadas.count : 0
 
             if let hora = cal.date(byAdding: .minute, value: prefs.minutoBriefing, to: dia), hora > agora {
+                let corpo = Briefing.texto(para: dia, doDia: doDia) ?? textoBriefing(doDia, atrasadas: atrasadas)
                 pedidos.append(pedido("briefing-\(deslocamento)", titulo: saudacao(prefs.nome),
-                                      corpo: textoBriefing(doDia, atrasadas: atrasadas), em: hora, cal: cal,
-                                      categoria: nil, grupo: "rotina"))
+                                      corpo: corpo, em: hora, cal: cal,
+                                      categoria: nil, grupo: "rotina", info: ["tipo": Tipo.briefing]))
             }
             if let hora = cal.date(byAdding: .minute, value: prefs.minutoCheckin, to: dia), hora > agora,
                !doDia.isEmpty || atrasadas > 0 {
                 pedidos.append(pedido("checkin-\(deslocamento)", titulo: "Fechando o dia",
                                       corpo: textoCheckin(doDia, atrasadas: atrasadas), em: hora, cal: cal,
-                                      categoria: Categoria.checkin, grupo: "rotina"))
+                                      categoria: Categoria.checkin, grupo: "rotina", info: ["tipo": Tipo.checkin]))
             }
         }
         return pedidos
@@ -155,7 +162,7 @@ enum Notificacoes {
 
     private static func pedido(
         _ id: String, titulo: String, corpo: String, em data: Date, cal: Calendar,
-        categoria: String?, grupo: String, tarefaID: String? = nil
+        categoria: String?, grupo: String, info: [String: String]
     ) -> UNNotificationRequest {
         let conteudo = UNMutableNotificationContent()
         conteudo.title = titulo
@@ -163,7 +170,7 @@ enum Notificacoes {
         conteudo.sound = .default
         conteudo.threadIdentifier = grupo
         if let categoria { conteudo.categoryIdentifier = categoria }
-        if let tarefaID { conteudo.userInfo = ["tarefa": tarefaID] }
+        conteudo.userInfo = info
         let quando = cal.dateComponents([.year, .month, .day, .hour, .minute], from: data)
         return UNNotificationRequest(identifier: id, content: conteudo,
                                      trigger: UNCalendarNotificationTrigger(dateMatching: quando, repeats: false))

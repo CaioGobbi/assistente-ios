@@ -25,11 +25,12 @@ struct ClaudeClient {
             "max_tokens": 16000,
             "system": .string(sistema),
             "messages": .array(mensagens),
-            "tools": .array(ferramentas),
             // Planejar o dia não exige raciocínio longo; mantém rápido e barato.
             "output_config": ["effort": "low"],
             "cache_control": ["type": "ephemeral"],
         ]
+
+        if !ferramentas.isEmpty { corpo["tools"] = .array(ferramentas) }
 
         var pedido = URLRequest(url: URL(string: "https://api.anthropic.com/v1/messages")!)
         pedido.httpMethod = "POST"
