@@ -53,7 +53,7 @@ O modelo padrão é o Opus 5.5; o Haiku 5.5 sai bem mais barato se quiser econom
 4. Ainda na Demo, em **Itens Conectados**, clique em cada item e copie o **itemId**. Cada banco vira um item.
 5. No app, **Ajustes > Banco**: cole Client ID, Secret e os Item IDs (separados por vírgula) e toque em **Testar conexão**.
 
-A aba **Gastos** sincroniza sozinha a cada 6 horas (ou puxe a lista para baixo). Na primeira vez traz os últimos 90 dias.
+A aba **Gastos** sincroniza sozinha a cada 6 horas (ou puxe a lista para baixo). Cada sincronização traz os últimos 12 meses inteiros, então o que a Pluggy carregar atrasado também aparece.
 Pagamento de fatura fica fora dos totais, porque as compras já contam no cartão.
 
 Sem Pluggy, dá para usar **Importar extrato**: exporte o extrato em OFX ou CSV no app ou site do banco e escolha o arquivo.
