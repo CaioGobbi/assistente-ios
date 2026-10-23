@@ -12,20 +12,12 @@ enum Tema {
     static let destaque = cor(0xC2571A, escuro: 0xF08A4B)
     static let positivo = cor(0x2F6B3C, escuro: 0x7BC08A)
     static let negativo = cor(0xB3261E, escuro: 0xF2867E)
-    /// A barra de abas é escura nos dois modos.
-    static let barra = cor(0x1C1A17, escuro: 0x2A2723)
-    static let barraAtiva = cor(0x3A3631, escuro: 0x45403A)
-    static let barraIcone = cor(0xA39D92, escuro: 0x8F897E)
-    static let barraIconeAtivo = cor(0xFAF8F3, escuro: 0xF2EEE6)
-
-    /// Espaço que a barra de abas flutuante ocupa no rodapé.
-    static let alturaBarra: CGFloat = 84
 
     static func titulo(_ tamanho: CGFloat) -> Font {
         .system(size: tamanho, weight: .regular, design: .serif)
     }
 
-    /// Títulos de navegação (Ajustes, Memória, telas de edição) também em serifa.
+    /// Títulos de navegação em serifa e barra de abas fixa no fundo creme.
     static func configurarAparencia() {
         let serif = { (tamanho: CGFloat, peso: UIFont.Weight) -> UIFont in
             let base = UIFont.systemFont(ofSize: tamanho, weight: peso)
@@ -39,6 +31,19 @@ enum Tema {
         UINavigationBar.appearance().standardAppearance = aparencia
         UINavigationBar.appearance().scrollEdgeAppearance = aparencia
         UINavigationBar.appearance().compactAppearance = aparencia
+
+        let abas = UITabBarAppearance()
+        abas.configureWithOpaqueBackground()
+        abas.backgroundColor = UIColor(fundo)
+        abas.shadowColor = UIColor(linha)
+        for item in [abas.stackedLayoutAppearance, abas.inlineLayoutAppearance, abas.compactInlineLayoutAppearance] {
+            item.normal.iconColor = UIColor(suave)
+            item.normal.titleTextAttributes = [.foregroundColor: UIColor(suave)]
+            item.selected.iconColor = UIColor(tinta)
+            item.selected.titleTextAttributes = [.foregroundColor: UIColor(tinta)]
+        }
+        UITabBar.appearance().standardAppearance = abas
+        UITabBar.appearance().scrollEdgeAppearance = abas
     }
 
     private static func cor(_ claro: UInt32, escuro: UInt32) -> Color {
@@ -51,6 +56,31 @@ enum Tema {
                 alpha: 1
             )
         })
+    }
+}
+
+/// Claro, escuro ou seguir o iPhone. Começa no claro.
+enum Aparencia: String, CaseIterable, Identifiable {
+    case claro, escuro, sistema
+
+    static let chave = "aparencia"
+
+    var id: String { rawValue }
+
+    var nome: String {
+        switch self {
+        case .claro: return "Claro"
+        case .escuro: return "Escuro"
+        case .sistema: return "Automático"
+        }
+    }
+
+    var esquema: ColorScheme? {
+        switch self {
+        case .claro: return .light
+        case .escuro: return .dark
+        case .sistema: return nil
+        }
     }
 }
 

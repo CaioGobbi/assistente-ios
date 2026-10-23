@@ -42,7 +42,7 @@ struct ConversaView: View {
             .safeAreaInset(edge: .bottom, spacing: 0) {
                 VStack(spacing: 0) {
                     barra
-                    Color.clear.frame(height: digitando ? 8 : Tema.alturaBarra)
+                    Color.clear.frame(height: 8)
                 }
             }
             .toolbar(.hidden, for: .navigationBar)

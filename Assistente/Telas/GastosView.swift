@@ -65,7 +65,6 @@ struct GastosView: View {
             .listStyle(.plain)
             .fundoTomoshibi()
             .toolbar(.hidden, for: .navigationBar)
-            .safeAreaInset(edge: .bottom, spacing: 0) { Color.clear.frame(height: Tema.alturaBarra) }
             .refreshable { await sincronizar() }
             .task { await sincronizarSePreciso() }
             .fileImporter(isPresented: $importando, allowedContentTypes: Self.tiposExtrato) { resultado in

@@ -4,6 +4,7 @@ import UserNotifications
 
 struct AjustesView: View {
     @AppStorage(Preferencias.chaveNome) private var nome = ""
+    @AppStorage(Aparencia.chave) private var aparencia = Aparencia.claro
     @AppStorage(Preferencias.chaveModelo) private var modelo = Preferencias.modeloPadrao
     @AppStorage(Preferencias.chaveBriefing) private var minutoBriefing = Preferencias.briefingPadrao
     @AppStorage(Preferencias.chaveCheckin) private var minutoCheckin = Preferencias.checkinPadrao
@@ -33,6 +34,9 @@ struct AjustesView: View {
             Form {
                 Section("Você") {
                     TextField("Seu nome", text: $nome)
+                    Picker("Aparência", selection: $aparencia) {
+                        ForEach(Aparencia.allCases) { Text($0.nome).tag($0) }
+                    }
                     NavigationLink {
                         MemoriaView()
                     } label: {
@@ -74,7 +78,6 @@ struct AjustesView: View {
                 }
             }
             .fundoTomoshibi()
-            .safeAreaInset(edge: .bottom, spacing: 0) { Color.clear.frame(height: Tema.alturaBarra) }
             .navigationTitle("Ajustes")
             .onChange(of: chave) { _, valor in
                 Keychain.salvar(valor.trimmingCharacters(in: .whitespacesAndNewlines), conta: Keychain.contaAPI)

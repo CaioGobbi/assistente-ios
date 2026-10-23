@@ -41,7 +41,7 @@ struct HojeView: View {
             .safeAreaInset(edge: .bottom, spacing: 0) {
                 VStack(spacing: 0) {
                     campoAnotar
-                    Color.clear.frame(height: campoRapido ? 8 : Tema.alturaBarra)
+                    Color.clear.frame(height: 8)
                 }
             }
             .sheet(item: $editando) { EditarTarefaView(tarefa: $0) }
