@@ -46,9 +46,10 @@ O modelo padrão é o Opus 5.5; o Haiku 5.5 sai bem mais barato se quiser econom
 ### Banco (Meu Pluggy, grátis)
 
 1. Crie uma conta em [dashboard.pluggy.ai](https://dashboard.pluggy.ai) e uma **aplicação**. Copie o **Client ID** e o **Client Secret**.
-2. Conecte seus bancos pelo **Meu Pluggy**, seguindo as instruções da Pluggy. É o Open Finance oficial: você autoriza no app do banco e o acesso é só de leitura.
-3. No dashboard, abra a aplicação, **Ir para Demo**, menu de três pontos, **Copiar Item ID**. Cada banco conectado tem o seu.
-4. No app, **Ajustes > Banco**: cole Client ID, Secret e os Item IDs (separados por vírgula) e toque em **Testar conexão**.
+2. Em [meu.pluggy.ai](https://meu.pluggy.ai), conecte seus bancos. É o Open Finance oficial: você autoriza no app do banco e o acesso é só de leitura.
+3. No dashboard: **Aplicações** > sua aplicação > página **Demo** > **Conectar Conta** > escolha **MeuPluggy** (aba Direct Connectors) e entre com a conta do Meu Pluggy.
+4. Ainda na Demo, em **Itens Conectados**, clique em cada item e copie o **itemId**. Cada banco vira um item.
+5. No app, **Ajustes > Banco**: cole Client ID, Secret e os Item IDs (separados por vírgula) e toque em **Testar conexão**.
 
 A aba **Gastos** sincroniza sozinha a cada 6 horas (ou puxe a lista para baixo). Na primeira vez traz os últimos 90 dias.
 Pagamento de fatura fica fora dos totais, porque as compras já contam no cartão.
