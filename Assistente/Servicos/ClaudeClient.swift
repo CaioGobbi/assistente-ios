@@ -44,6 +44,19 @@ struct ClaudeClient {
         }
         pedido.httpBody = try JSONEncoder().encode(JSONValue.object(corpo))
 
+        return try await Self.executar(pedido)
+    }
+
+    /// Confere se a chave funciona sem gastar tokens (lista um modelo).
+    static func testar(chave: String) async throws {
+        var pedido = URLRequest(url: URL(string: "https://api.anthropic.com/v1/models?limit=1")!)
+        pedido.timeoutInterval = 20
+        pedido.setValue(chave, forHTTPHeaderField: "x-api-key")
+        pedido.setValue("2026-10-21", forHTTPHeaderField: "anthropic-version")
+        _ = try await executar(pedido)
+    }
+
+    private static func executar(_ pedido: URLRequest) async throws -> JSONValue {
         let (dados, resposta) = try await URLSession.shared.data(for: pedido)
         let status = (resposta as? HTTPURLResponse)?.statusCode ?? 0
         guard status == 200 else {

@@ -17,7 +17,7 @@ struct RaizView: View {
             .tabItem { Label("Hoje", systemImage: "sun.max") }
             .tag(Aba.hoje)
 
-            ConversaView()
+            ConversaView(abrirAjustes: { aba = .ajustes })
                 .tabItem { Label("Assistente", systemImage: "sparkles") }
                 .tag(Aba.assistente)
 

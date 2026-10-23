@@ -10,6 +10,7 @@ struct HojeView: View {
     @State private var rapida = ""
     @State private var editando: Tarefa?
     @State private var criando = false
+    @FocusState private var campoRapido: Bool
 
     var body: some View {
         let agenda = Agenda(tarefas)
@@ -20,13 +21,23 @@ struct HojeView: View {
                 Section {
                     HStack {
                         TextField("Anotar algo pra hoje…", text: $rapida)
-                            .submitLabel(.done)
+                            .focused($campoRapido)
+                            .submitLabel(.next)
                             .onSubmit(adicionarRapida)
                         if !rapida.isEmpty {
                             Button("Adicionar", systemImage: "plus.circle.fill", action: adicionarRapida)
                                 .labelStyle(.iconOnly)
                         }
                     }
+                }
+
+                if tarefas.isEmpty {
+                    ContentUnavailableView(
+                        "Nada por aqui ainda",
+                        systemImage: "checklist",
+                        description: Text("Anote algo acima ou peça pro assistente organizar seu dia.")
+                    )
+                    .listRowBackground(Color.clear)
                 }
 
                 secao("Atrasadas", agenda.atrasadas, destaque: .red)
@@ -86,6 +97,8 @@ struct HojeView: View {
                     LinhaTarefa(tarefa: t, alternar: { alternar(t) })
                         .contentShape(Rectangle())
                         .onTapGesture { editando = t }
+                        .accessibilityAddTraits(.isButton)
+                        .accessibilityHint("Abre para editar")
                         .swipeActions(edge: .leading) {
                             Button(t.concluida ? "Reabrir" : "Feito", systemImage: "checkmark") { alternar(t) }
                                 .tint(.green)
@@ -110,6 +123,8 @@ struct HojeView: View {
         context.insert(Tarefa(titulo: titulo, data: Calendar.current.startOfDay(for: .now)))
         rapida = ""
         salvar()
+        // Mantém o teclado aberto para anotar várias seguidas.
+        campoRapido = true
     }
 
     private func alternar(_ t: Tarefa) {
@@ -144,9 +159,11 @@ struct LinhaTarefa: View {
                 Image(systemName: tarefa.concluida ? "checkmark.circle.fill" : "circle")
                     .font(.title3)
                     .foregroundStyle(tarefa.concluida ? .green : .secondary)
+                    .symbolEffect(.bounce, value: tarefa.concluida)
+                    .frame(minWidth: 44, minHeight: 44)
+                    .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
-            .accessibilityLabel(tarefa.concluida ? "Reabrir" : "Marcar como feita")
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(tarefa.titulo)
@@ -167,5 +184,9 @@ struct LinhaTarefa: View {
                 Image(systemName: "flag.fill").foregroundStyle(.orange).accessibilityLabel("Prioridade alta")
             }
         }
+        .sensoryFeedback(.success, trigger: tarefa.concluida) { _, feita in feita }
+        .accessibilityElement(children: .combine)
+        .accessibilityValue(tarefa.concluida ? "Feita" : "")
+        .accessibilityAction(named: tarefa.concluida ? "Reabrir" : "Marcar como feita", alternar)
     }
 }

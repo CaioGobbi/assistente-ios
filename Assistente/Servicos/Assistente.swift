@@ -15,7 +15,11 @@ final class Assistente {
 
     private(set) var mensagens: [Mensagem] = []
     private(set) var pensando = false
-    var erro: String?
+    private(set) var erro: String?
+    /// A chave da API não está configurada; a tela oferece um atalho para Ajustes.
+    private(set) var faltaChave = false
+    /// Texto da última mensagem que falhou, para "Tentar de novo".
+    private(set) var pendente: String?
 
     /// Histórico no formato da API. Só cresce no fim; nunca é editado no meio.
     @ObservationIgnored private var historico: [JSONValue] = []
@@ -32,6 +36,8 @@ final class Assistente {
         mensagens = []
         historico = []
         erro = nil
+        faltaChave = false
+        pendente = nil
     }
 
     func planejarDia() async {
@@ -41,8 +47,23 @@ final class Assistente {
     func enviar(_ entrada: String) async {
         let texto = entrada.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !texto.isEmpty, !pensando else { return }
+        mensagens.append(Mensagem(doUsuario: true, texto: texto))
+        await rodar(texto)
+    }
+
+    func tentarDeNovo() async {
+        guard let texto = pendente, !pensando else { return }
+        await rodar(texto)
+    }
+
+    private func rodar(_ texto: String) async {
+        erro = nil
+        faltaChave = false
+        pendente = nil
         guard let chave = Keychain.ler(Keychain.contaAPI), !chave.isEmpty else {
-            erro = "Coloca sua chave da API nos Ajustes primeiro."
+            erro = "Falta a chave da API do Claude."
+            faltaChave = true
+            pendente = texto
             return
         }
 
@@ -51,13 +72,11 @@ final class Assistente {
         let ferramentas = Ferramentas(context: context)
         let inicio = historico.count
 
-        mensagens.append(Mensagem(doUsuario: true, texto: texto))
         historico.append([
             "role": "user",
             "content": [["type": "text", "text": .string("[\(Formatos.agora())]\n\(texto)")]],
         ])
         pensando = true
-        erro = nil
         defer { pensando = false }
 
         do {
@@ -100,6 +119,7 @@ final class Assistente {
             // Descarta a rodada incompleta para a próxima mensagem começar de um histórico válido.
             historico.removeSubrange(inicio...)
             erro = error.localizedDescription
+            pendente = texto
         }
     }
 

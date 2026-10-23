@@ -1,9 +1,10 @@
 import SwiftUI
 
 struct ConversaView: View {
+    var abrirAjustes: () -> Void
+
     @Environment(Assistente.self) private var assistente
     @State private var texto = ""
-    @FocusState private var digitando: Bool
 
     private let sugestoes = [
         "Monta meu plano de hoje.",
@@ -18,14 +19,8 @@ struct ConversaView: View {
                     LazyVStack(alignment: .leading, spacing: 12) {
                         if assistente.mensagens.isEmpty { vazio }
                         ForEach(assistente.mensagens) { Bolha(mensagem: $0).id($0.id) }
-                        if assistente.pensando {
-                            ProgressView().padding(.leading, 4)
-                        }
-                        if let erro = assistente.erro {
-                            Label(erro, systemImage: "exclamationmark.triangle")
-                                .font(.footnote)
-                                .foregroundStyle(.red)
-                        }
+                        if assistente.pensando { pensando.id("pensando") }
+                        if let erro = assistente.erro { falha(erro) }
                     }
                     .padding()
                 }
@@ -33,6 +28,9 @@ struct ConversaView: View {
                 .onChange(of: assistente.mensagens.count) {
                     guard let ultima = assistente.mensagens.last?.id else { return }
                     withAnimation { proxy.scrollTo(ultima, anchor: .bottom) }
+                }
+                .onChange(of: assistente.pensando) {
+                    if assistente.pensando { withAnimation { proxy.scrollTo("pensando", anchor: .bottom) } }
                 }
             }
             .safeAreaInset(edge: .bottom) { barra }
@@ -57,17 +55,48 @@ struct ConversaView: View {
         .padding(.top, 24)
     }
 
+    private var pensando: some View {
+        HStack(spacing: 8) {
+            ProgressView()
+            Text("Pensando…").foregroundStyle(.secondary)
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
+        .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 18))
+        .accessibilityElement(children: .combine)
+    }
+
+    private func falha(_ erro: String) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Label(erro, systemImage: "exclamationmark.triangle")
+                .font(.footnote)
+                .foregroundStyle(.red)
+            HStack {
+                if assistente.faltaChave {
+                    Button("Abrir Ajustes", systemImage: "gearshape", action: abrirAjustes)
+                }
+                if assistente.pendente != nil {
+                    Button("Tentar de novo", systemImage: "arrow.clockwise") {
+                        Task { await assistente.tentarDeNovo() }
+                    }
+                }
+            }
+            .buttonStyle(.bordered)
+            .controlSize(.small)
+        }
+    }
+
     private var barra: some View {
         HStack(alignment: .bottom, spacing: 8) {
             TextField("Mensagem", text: $texto, axis: .vertical)
                 .lineLimit(1...5)
-                .focused($digitando)
                 .padding(.horizontal, 14)
                 .padding(.vertical, 10)
                 .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 20))
             Button("Enviar", systemImage: "arrow.up.circle.fill") { mandar(texto) }
                 .labelStyle(.iconOnly)
                 .font(.title)
+                .frame(minWidth: 44, minHeight: 44)
                 .disabled(texto.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || assistente.pensando)
         }
         .padding(.horizontal)
@@ -97,6 +126,8 @@ private struct Bolha: View {
                 )
             if !mensagem.doUsuario { Spacer(minLength: 40) }
         }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(mensagem.doUsuario ? "Você" : "Assistente"): \(mensagem.texto)")
     }
 
     private var markdown: AttributedString {

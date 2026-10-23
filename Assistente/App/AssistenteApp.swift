@@ -27,7 +27,17 @@ final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCent
         didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
     ) -> Bool {
         UNUserNotificationCenter.current().delegate = self
+        Notificacoes.registrarCategorias()
         return true
+    }
+
+    // Botões da notificação (Feito, Adiar 1h, Amanhã...). Roda sem abrir o app.
+    func userNotificationCenter(
+        _ center: UNUserNotificationCenter,
+        didReceive response: UNNotificationResponse
+    ) async {
+        let tarefaID = response.notification.request.content.userInfo["tarefa"] as? String
+        await Notificacoes.responder(acao: response.actionIdentifier, tarefaID: tarefaID)
     }
 
     // Mostra o lembrete mesmo com o app aberto.
