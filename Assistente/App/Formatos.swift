@@ -38,6 +38,18 @@ enum Formatos {
         return (data, true)
     }
 
+    /// "R$ 1.234,56"
+    static func reais(_ valor: Double) -> String {
+        valor.formatted(.currency(code: "BRL").locale(Locale(identifier: "pt_BR")))
+    }
+
+    /// "Hoje", "Ontem", "qua., 22 de out."
+    static func rotulo(dia data: Date, cal: Calendar = .current) -> String {
+        if cal.isDateInToday(data) { return "Hoje" }
+        if cal.isDateInYesterday(data) { return "Ontem" }
+        return data.formatted(.dateTime.weekday(.abbreviated).day().month(.abbreviated).locale(Locale(identifier: "pt_BR")))
+    }
+
     /// "Hoje 09:30", "Amanhã", "sex., 24 de out."
     static func rotulo(_ t: Tarefa, cal: Calendar = .current) -> String? {
         guard let data = t.data else { return nil }

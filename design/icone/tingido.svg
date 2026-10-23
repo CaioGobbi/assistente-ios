@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs><linearGradient id="pr" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8A8A8A"/><stop offset="1" stop-color="#5A5A5A"/></linearGradient><linearGradient id="pb" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#D0D0D0"/><stop offset="1" stop-color="#A8A8A8"/></linearGradient>
+    <linearGradient id="fo" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#E6E6E6"/><stop offset="1" stop-color="#9A9A9A"/></linearGradient>
+    <linearGradient id="fi" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#F2F2F2"/></linearGradient>
+    <radialGradient id="gl" cx="0.5" cy="0.62" r="0.42"><stop offset="0" stop-color="#FFFFFF" stop-opacity="0.18"/><stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/></radialGradient>
+  </defs>
+  <circle cx="512" cy="560" r="420" fill="url(#gl)"/>
+  <g transform="translate(72 0) scale(0.86)">
+  <path fill="url(#fo)" d="M512 160 C 548 270, 640 330, 690 430 C 738 525, 735 640, 690 720 C 645 800, 580 845, 512 845 C 444 845, 379 800, 334 720 C 289 640, 300 545, 345 470 C 372 425, 405 400, 418 350 C 450 395, 462 430, 470 470 C 505 400, 520 300, 512 160 Z"/>
+  <path fill="url(#fi)" d="M512 455 C 545 525, 618 580, 618 680 C 618 745, 570 790, 512 790 C 454 790, 406 745, 406 680 C 406 620, 445 585, 465 545 C 478 575, 485 590, 492 605 C 510 560, 518 510, 512 455 Z"/></g>
+  <path fill="url(#pr)" d="M290 742 Q512 770 734 742 Q712 850 512 858 Q312 850 290 742 Z"/>
+  <ellipse cx="512" cy="744" rx="222" ry="20" fill="url(#pb)"/></svg>

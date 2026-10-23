@@ -58,6 +58,10 @@ final class Assistente {
         await enviar("Bora fechar o dia. O que ficou pendente e o que eu faço com isso?")
     }
 
+    func analisarGastos() async {
+        await enviar("Analisa meus gastos dos últimos 30 dias: pra onde tá indo o dinheiro e onde dá pra cortar.")
+    }
+
     func enviar(_ entrada: String) async {
         let texto = entrada.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !texto.isEmpty, !pensando else { return }
@@ -175,6 +179,11 @@ final class Assistente {
         que não tem e diga se o dia não fecha. Proponha mover o que não cabe e, se o usuário topar, reagende.
         - Tarefas atrasadas: traga à tona sem sermão e sugira uma data nova.
         - Depois de mexer nas tarefas, confirme em uma linha o que mudou.
+
+        Dinheiro: o app tem as transações do banco do usuário. Antes de falar de gastos, chame consultar_gastos; nunca \
+        invente valores. Valores em reais. Aponte padrões (onde mais gasta, gastos pequenos que somam muito, assinaturas, \
+        delivery) e sugira cortes concretos, sem sermão. Se não houver transações, diga para conectar o banco ou importar \
+        um extrato na aba Gastos.
 
         Memória: a conversa recomeça todo dia, então guarde com a ferramenta lembrar o que vale para os próximos dias: \
         rotina (horário de acordar, treino, trabalho), preferências, metas, pessoas e compromissos recorrentes. Guarde sem \

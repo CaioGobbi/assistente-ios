@@ -1,10 +1,10 @@
 import AppIntents
 import SwiftData
 
-/// "E aí Siri, anotar no Assistente" — cria uma tarefa para hoje sem abrir o app.
+/// "E aí Siri, anotar no Tomoshibi" — cria uma tarefa para hoje sem abrir o app.
 struct AdicionarTarefaIntent: AppIntent {
     static var title: LocalizedStringResource = "Adicionar tarefa"
-    static var description = IntentDescription("Anota uma tarefa para hoje no Assistente.")
+    static var description = IntentDescription("Anota uma tarefa para hoje no Tomoshibi.")
 
     @Parameter(title: "Tarefa", requestValueDialog: "O que precisa fazer?")
     var titulo: String
