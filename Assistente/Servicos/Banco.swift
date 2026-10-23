@@ -7,10 +7,10 @@ enum Banco {
     nonisolated static let prefixo = "banco-"
     /// Momento da última sincronização (segundos desde 1970), para a tela mostrar e decidir se sincroniza sozinha.
     nonisolated static let chaveUltimaSync = "ultimaSincronizacaoBanco"
-    /// Na primeira vez, quanto do passado buscar.
-    private static let diasIniciais = 90
-    /// Nas seguintes, volta um pouco antes da última para pegar o que mudou (pendentes que viraram lançamento).
-    private static let diasDeFolga = 10
+    /// Quanto do passado buscar. Toda sincronização refaz a janela inteira: a Pluggy às vezes traz lançamentos
+    /// com data antiga depois (cartão, conexão que ainda estava carregando), e uma busca só dos últimos dias perdia esses.
+    /// O Open Finance guarda 12 meses.
+    private static let diasBuscados = 365
 
     static var configurado: Bool { CredenciaisPluggy.salvas != nil }
 
@@ -35,13 +35,8 @@ enum Banco {
     @discardableResult
     static func sincronizar(context: ModelContext) async throws -> Int {
         guard let c = CredenciaisPluggy.salvas else { throw FalhaFerramenta("Configura o Meu Pluggy nos Ajustes primeiro.") }
-        let defaults = UserDefaults.standard
-        let ultima = defaults.double(forKey: chaveUltimaSync)
         let cal = Calendar.current
-        let desde = ultima > 0
-            ? cal.date(byAdding: .day, value: -diasDeFolga, to: Date(timeIntervalSince1970: ultima))!
-            : cal.date(byAdding: .day, value: -diasIniciais, to: .now)!
-        let inicio = cal.startOfDay(for: desde)
+        let inicio = cal.startOfDay(for: cal.date(byAdding: .day, value: -diasBuscados, to: .now)!)
 
         let api = try await PluggyClient.entrar(c)
         var recebidas: [Transacao] = []
@@ -54,8 +49,9 @@ enum Banco {
             for conta in try await api.contas(item: item) {
                 guard let contaID = conta["id"]?.string else { continue }
                 let nomeConta = conta["marketingName"]?.string ?? conta["name"]?.string ?? "Conta"
+                let cartao = conta["type"]?.string == "CREDIT"
                 for t in try await api.transacoes(conta: contaID, desde: inicio) {
-                    if let nova = converter(t, conta: nomeConta) { recebidas.append(nova) }
+                    if let nova = converter(t, conta: nomeConta, cartao: cartao) { recebidas.append(nova) }
                 }
             }
         }
@@ -63,9 +59,10 @@ enum Banco {
         let doPeriodo = try context.fetch(FetchDescriptor<Transacao>(predicate: #Predicate { $0.data >= inicio }))
         var porChave: [String: Transacao] = [:]
         for t in doPeriodo where t.doBanco { porChave[t.chave] = t }
-        // Pendentes mudam de id quando o banco confirma; a versão nova vem nesta busca.
+        // A janela veio inteira, então o que sumiu da Pluggy sai daqui também
+        // (pendentes mudam de id quando o banco confirma; a versão nova vem nesta busca).
         let chavesRecebidas = Set(recebidas.map(\.chave))
-        for t in porChave.values where t.pendente && !chavesRecebidas.contains(t.chave) {
+        for t in porChave.values where !chavesRecebidas.contains(t.chave) {
             context.delete(t)
         }
 
@@ -85,22 +82,22 @@ enum Banco {
             }
         }
         try context.save()
-        defaults.set(Date.now.timeIntervalSince1970, forKey: chaveUltimaSync)
+        UserDefaults.standard.set(Date.now.timeIntervalSince1970, forKey: chaveUltimaSync)
         return novas
     }
 
-    private static func converter(_ t: JSONValue, conta: String) -> Transacao? {
+    private static func converter(_ t: JSONValue, conta: String, cartao: Bool) -> Transacao? {
         guard let id = t["id"]?.string,
               let valor = t["amountInAccountCurrency"]?.double ?? t["amount"]?.double,
               let data = t["date"]?.string.flatMap(lerData) else { return nil }
-        // DEBIT é dinheiro saindo, independente do sinal que o banco usa.
-        let saida = t["type"]?.string == "DEBIT"
+        // Na conta, negativo é saída. No cartão a Pluggy inverte: compra vem positiva e pagamento ou estorno, negativo.
+        // O campo `type` não é confiável no cartão (compra pode vir como CREDIT), então vale o sinal.
         let descricao = t["merchant"]?["name"]?.string ?? t["description"]?.string ?? "Sem descrição"
         return Transacao(
             chave: prefixo + id,
             data: data,
             descricao: descricao,
-            valor: saida ? -abs(valor) : abs(valor),
+            valor: cartao ? -valor : valor,
             categoria: t["category"]?.string,
             conta: conta,
             pendente: t["status"]?.string == "PENDING"
