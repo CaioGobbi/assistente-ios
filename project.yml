@@ -17,7 +17,11 @@ targets:
     info:
       path: Assistente/Info.plist
       properties:
-        CFBundleDisplayName: Assistente
+        CFBundleDisplayName: 灯火
+        # A Siri em português não lê kanji: "Tomoshibi" é o nome falado.
+        INAlternativeAppNames:
+          - INAlternativeAppName: Tomoshibi
+            INAlternativeAppNamePronunciationHint: tomochíbi
         UILaunchScreen: {}
         UIApplicationSupportsIndirectInputEvents: true
         UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
@@ -26,6 +30,7 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.caiogobbi.assistente
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         TARGETED_DEVICE_FAMILY: "1"
         CODE_SIGN_STYLE: Automatic
         # Preencha com o Team ID da sua conta Apple (grátis serve) ou escolha no Xcode.
