@@ -47,6 +47,11 @@ enum JSONValue: Codable, Equatable {
         return nil
     }
 
+    var double: Double? {
+        if case .number(let v) = self { return v }
+        return nil
+    }
+
     var bool: Bool? {
         if case .bool(let v) = self { return v }
         return nil

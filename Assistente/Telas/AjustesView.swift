@@ -9,12 +9,22 @@ struct AjustesView: View {
     @AppStorage(Preferencias.chaveCheckin) private var minutoCheckin = Preferencias.checkinPadrao
     @State private var chave = Keychain.ler(Keychain.contaAPI) ?? ""
     @State private var teste = TesteChave.nenhum
+    @State private var pluggyID = Keychain.ler(Keychain.contaPluggyID) ?? ""
+    @State private var pluggySecret = Keychain.ler(Keychain.contaPluggySecret) ?? ""
+    @State private var pluggyItens = Keychain.ler(Keychain.contaPluggyItens) ?? ""
+    @State private var testeBanco = TesteBanco.nenhum
     @State private var permissao = UNAuthorizationStatus.notDetermined
     @Environment(\.scenePhase) private var fase
     @Environment(\.openURL) private var openURL
 
     private enum TesteChave: Equatable {
         case nenhum, testando, ok
+        case falhou(String)
+    }
+
+    private enum TesteBanco: Equatable {
+        case nenhum, testando
+        case ok([String])
         case falhou(String)
     }
 
@@ -51,6 +61,8 @@ struct AjustesView: View {
                     Text("A chave fica só no Keychain deste iPhone. Crie uma em console.anthropic.com. O uso é cobrado por lá.")
                 }
 
+                banco
+
                 Section {
                     notificacoes
                     DatePicker("Resumo da manhã", selection: horario($minutoBriefing), displayedComponents: .hourAndMinute)
@@ -66,6 +78,9 @@ struct AjustesView: View {
                 Keychain.salvar(valor.trimmingCharacters(in: .whitespacesAndNewlines), conta: Keychain.contaAPI)
                 teste = .nenhum
             }
+            .onChange(of: pluggyID) { _, valor in salvarBanco(valor, Keychain.contaPluggyID) }
+            .onChange(of: pluggySecret) { _, valor in salvarBanco(valor, Keychain.contaPluggySecret) }
+            .onChange(of: pluggyItens) { _, valor in salvarBanco(valor, Keychain.contaPluggyItens) }
             .onChange(of: minutoBriefing) { Notificacoes.reagendarTudo() }
             .onChange(of: minutoCheckin) { Notificacoes.reagendarTudo() }
             .onChange(of: nome) { Notificacoes.reagendarTudo() }
@@ -88,6 +103,56 @@ struct AjustesView: View {
             Image(systemName: "xmark.circle.fill").foregroundStyle(.red).accessibilityLabel("Chave com problema")
         case .nenhum:
             EmptyView()
+        }
+    }
+
+    private var banco: some View {
+        Section {
+            TextField("Client ID", text: $pluggyID)
+                .textInputAutocapitalization(.never)
+                .autocorrectionDisabled()
+            SecureField("Client Secret", text: $pluggySecret)
+                .textInputAutocapitalization(.never)
+                .autocorrectionDisabled()
+            TextField("Item IDs (separados por vírgula)", text: $pluggyItens, axis: .vertical)
+                .textInputAutocapitalization(.never)
+                .autocorrectionDisabled()
+            HStack {
+                Button("Testar conexão", action: testarBanco)
+                    .disabled(pluggyID.isEmpty || pluggySecret.isEmpty || pluggyItens.isEmpty || testeBanco == .testando)
+                Spacer()
+                if testeBanco == .testando { ProgressView() }
+            }
+            switch testeBanco {
+            case .ok(let nomes):
+                Label("Conectado: \(nomes.joined(separator: ", "))", systemImage: "checkmark.circle.fill")
+                    .font(.footnote).foregroundStyle(.green)
+            case .falhou(let motivo):
+                Text(motivo).font(.footnote).foregroundStyle(.red)
+            default:
+                EmptyView()
+            }
+        } header: {
+            Text("Banco (Meu Pluggy)")
+        } footer: {
+            Text("No dashboard.pluggy.ai, crie uma aplicação e copie o Client ID e o Secret. Conecte seus bancos pelo Meu Pluggy e copie o Item ID de cada um. É Open Finance, só leitura, e tudo fica no Keychain deste iPhone.")
+        }
+    }
+
+    private func salvarBanco(_ valor: String, _ conta: String) {
+        Keychain.salvar(valor.trimmingCharacters(in: .whitespacesAndNewlines), conta: conta)
+        testeBanco = .nenhum
+    }
+
+    private func testarBanco() {
+        guard let credenciais = CredenciaisPluggy.salvas else { return }
+        testeBanco = .testando
+        Task {
+            do {
+                testeBanco = .ok(try await Banco.testar(credenciais))
+            } catch {
+                testeBanco = .falhou(error.localizedDescription)
+            }
         }
     }
 
