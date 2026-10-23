@@ -48,25 +48,24 @@ struct GastosView: View {
         NavigationStack {
             List {
                 if transacoes.isEmpty {
-                    vazio
+                    vazio.linhaSolta(topo: 40)
                 } else {
-                    Section { cabecalho(resumo) }
-                    if let aviso { Section { avisoView(aviso) } }
+                    cabecalho(resumo).linhaSolta(topo: 12, base: 20)
+                    if let aviso { avisoView(aviso).linhaSolta(base: 12) }
                     categorias(resumo)
+                    Button(action: analisar) {
+                        Label("Onde dá pra economizar?", systemImage: "flame")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(BotaoPilula(cheio: false))
+                    .linhaSolta(topo: 4, base: 8)
                     lancamentos(resumo)
                 }
             }
-            .navigationTitle("Gastos")
-            .toolbar {
-                Menu("Mais", systemImage: "ellipsis.circle") {
-                    Button("Sincronizar banco", systemImage: "arrow.triangle.2.circlepath") {
-                        Task { await sincronizar() }
-                    }
-                    .disabled(!Banco.configurado || sincronizando)
-                    Button("Importar extrato (OFX/CSV)", systemImage: "square.and.arrow.down") { importando = true }
-                    Button("Configurar banco", systemImage: "gearshape", action: abrirAjustes)
-                }
-            }
+            .listStyle(.plain)
+            .fundoTomoshibi()
+            .toolbar(.hidden, for: .navigationBar)
+            .safeAreaInset(edge: .bottom, spacing: 0) { Color.clear.frame(height: Tema.alturaBarra) }
             .refreshable { await sincronizar() }
             .task { await sincronizarSePreciso() }
             .fileImporter(isPresented: $importando, allowedContentTypes: Self.tiposExtrato) { resultado in
@@ -80,85 +79,138 @@ struct GastosView: View {
 
     // MARK: Partes
 
+    private var maisOpcoes: some View {
+        Menu {
+            Button("Sincronizar banco", systemImage: "arrow.triangle.2.circlepath") {
+                Task { await sincronizar() }
+            }
+            .disabled(!Banco.configurado || sincronizando)
+            Button("Importar extrato (OFX/CSV)", systemImage: "square.and.arrow.down") { importando = true }
+            Button("Configurar banco", systemImage: "gearshape", action: abrirAjustes)
+        } label: {
+            Image(systemName: "ellipsis")
+                .font(.body.weight(.semibold))
+                .foregroundStyle(Tema.suave)
+                .frame(width: 44, height: 44)
+                .contentShape(Rectangle())
+        }
+        .accessibilityLabel("Mais")
+    }
+
     private var vazio: some View {
-        VStack(spacing: 16) {
-            ContentUnavailableView(
-                "Nenhum gasto ainda",
-                systemImage: "creditcard",
-                description: Text("Conecte seus bancos pelo Meu Pluggy ou importe um extrato OFX/CSV exportado do app do banco.")
-            )
-            if sincronizando { ProgressView("Buscando no banco…") }
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Pra onde vai o dinheiro")
+                .font(Tema.titulo(30))
+                .foregroundStyle(Tema.tinta)
+            Text("Conecte seus bancos pelo Meu Pluggy ou importe um extrato OFX/CSV exportado do app do banco.")
+                .foregroundStyle(Tema.suave)
+            if sincronizando {
+                ProgressView("Buscando no banco…").tint(Tema.destaque)
+            }
             if let aviso { avisoView(aviso) }
-            HStack {
+            HStack(spacing: 8) {
                 if Banco.configurado {
-                    Button("Sincronizar", systemImage: "arrow.triangle.2.circlepath") { Task { await sincronizar() } }
+                    Button("Sincronizar") { Task { await sincronizar() } }
+                        .buttonStyle(BotaoPilula())
                         .disabled(sincronizando)
                 } else {
-                    Button("Conectar banco", systemImage: "building.columns", action: abrirAjustes)
+                    Button("Conectar banco", action: abrirAjustes)
+                        .buttonStyle(BotaoPilula())
                 }
-                Button("Importar extrato", systemImage: "square.and.arrow.down") { importando = true }
+                Button("Importar extrato") { importando = true }
+                    .buttonStyle(BotaoPilula(cheio: false))
             }
-            .buttonStyle(.bordered)
         }
-        .frame(maxWidth: .infinity)
-        .listRowBackground(Color.clear)
     }
 
     private func cabecalho(_ r: ResumoGastos) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Picker("Período", selection: $periodo) {
-                ForEach(Periodo.allCases) { Text($0.rawValue).tag($0) }
+        VStack(alignment: .leading, spacing: 20) {
+            HStack(spacing: 6) {
+                ForEach(Periodo.allCases) { p in
+                    Button(p.rawValue) { periodo = p }
+                        .buttonStyle(BotaoPilula(cheio: p == periodo))
+                        .accessibilityAddTraits(p == periodo ? [.isSelected] : [])
+                }
+                Spacer(minLength: 0)
+                maisOpcoes.padding(.trailing, -10)
             }
-            .pickerStyle(.segmented)
 
-            VStack(alignment: .leading, spacing: 2) {
-                Text("GASTOU").font(.caption.weight(.semibold)).foregroundStyle(.secondary)
+            VStack(alignment: .leading, spacing: 6) {
+                Sobrescrito(texto: "Gastou · \(periodo.rawValue)")
                 Text(Formatos.reais(r.totalGasto))
-                    .font(.largeTitle.weight(.bold))
+                    .font(Tema.titulo(44))
+                    .foregroundStyle(Tema.tinta)
                     .monospacedDigit()
+                    .minimumScaleFactor(0.6)
+                    .lineLimit(1)
                     .contentTransition(.numericText())
                 Text("\(Formatos.reais(r.mediaPorDia)) por dia · entrou \(Formatos.reais(r.totalEntrada))")
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
+                    .font(.subheadline)
+                    .foregroundStyle(Tema.suave)
             }
             .accessibilityElement(children: .combine)
 
-            Button(action: analisar) {
-                Label("Analisar com o Claude", systemImage: "sparkles").frame(maxWidth: .infinity)
-            }
-            .buttonStyle(.borderedProminent)
-
             if sincronizando {
-                ProgressView("Buscando no banco…").font(.footnote)
+                ProgressView("Buscando no banco…").font(.footnote).tint(Tema.destaque)
             } else if ultimaSync > 0 {
                 Text("Banco sincronizado \(Date(timeIntervalSince1970: ultimaSync).formatted(.relative(presentation: .named).locale(Locale(identifier: "pt_BR"))))")
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Tema.suave)
             }
         }
-        .padding(.vertical, 4)
         .animation(.default, value: periodo)
+    }
+
+    /// Fatia da barra de categorias: as três maiores e o resto junto.
+    private struct Fatia: Identifiable {
+        let nome: String
+        let total: Double
+        let cor: Color
+        var id: String { nome }
+    }
+
+    private func fatias(_ r: ResumoGastos) -> [Fatia] {
+        let cores = [Tema.tinta, Tema.destaque, Color(red: 0.91, green: 0.66, blue: 0.47)]
+        var lista = r.porCategoria.prefix(3).enumerated().map { i, g in Fatia(nome: g.nome, total: g.total, cor: cores[i]) }
+        let resto = r.porCategoria.dropFirst(3).reduce(0) { $0 + $1.total }
+        if resto > 0 { lista.append(Fatia(nome: "Outros", total: resto, cor: Tema.linha)) }
+        return lista
     }
 
     @ViewBuilder
     private func categorias(_ r: ResumoGastos) -> some View {
-        if !r.porCategoria.isEmpty {
-            let maior = r.porCategoria.first?.total ?? 1
-            Section("Por categoria") {
-                ForEach(r.porCategoria.prefix(8)) { g in
-                    VStack(alignment: .leading, spacing: 6) {
-                        HStack {
-                            Text(g.nome)
-                            Spacer()
-                            Text(Formatos.reais(g.total)).monospacedDigit()
+        let lista = fatias(r)
+        if !lista.isEmpty && r.totalGasto > 0 {
+            VStack(alignment: .leading, spacing: 14) {
+                GeometryReader { geo in
+                    let espaco = CGFloat(lista.count - 1) * 2
+                    HStack(spacing: 2) {
+                        ForEach(lista) { f in
+                            Rectangle()
+                                .fill(f.cor)
+                                .frame(width: max(2, (geo.size.width - espaco) * CGFloat(f.total / r.totalGasto)))
                         }
-                        ProgressView(value: g.total, total: maior)
-                            .tint(.orange)
-                            .accessibilityHidden(true)
                     }
-                    .accessibilityElement(children: .combine)
+                    .clipShape(Capsule())
+                }
+                .frame(height: 10)
+                .accessibilityHidden(true)
+
+                LazyVGrid(columns: [GridItem(.flexible(), spacing: 16), GridItem(.flexible())], alignment: .leading, spacing: 10) {
+                    ForEach(lista) { f in
+                        HStack(spacing: 8) {
+                            Circle().fill(f.cor).frame(width: 8, height: 8)
+                            Text(f.nome).lineLimit(1)
+                            Spacer(minLength: 4)
+                            Text(Formatos.reais(f.total)).monospacedDigit().foregroundStyle(Tema.suave)
+                        }
+                        .font(.footnote)
+                        .foregroundStyle(Tema.tinta)
+                        .accessibilityElement(children: .combine)
+                    }
                 }
             }
+            .linhaSolta(base: 16)
         }
     }
 
@@ -167,27 +219,29 @@ struct GastosView: View {
         let cal = Calendar.current
         let dias = Dictionary(grouping: r.transacoes) { cal.startOfDay(for: $0.data) }
         ForEach(dias.keys.sorted(by: >), id: \.self) { dia in
-            Section(Formatos.rotulo(dia: dia)) {
-                ForEach(dias[dia] ?? []) { t in
-                    LinhaTransacao(transacao: t)
-                        .swipeActions {
-                            Button("Apagar", systemImage: "trash", role: .destructive) {
-                                context.delete(t)
-                                try? context.save()
-                            }
+            TituloSecao(texto: Formatos.rotulo(dia: dia))
+                .linhaSolta(topo: 16, base: 2)
+                .accessibilityAddTraits(.isHeader)
+            ForEach(dias[dia] ?? []) { t in
+                LinhaTransacao(transacao: t)
+                    .linhaSolta()
+                    .swipeActions {
+                        Button("Apagar", systemImage: "trash", role: .destructive) {
+                            context.delete(t)
+                            try? context.save()
                         }
-                }
+                    }
             }
         }
         if r.transacoes.isEmpty {
-            Text("Nada nesse período.").foregroundStyle(.secondary)
+            Text("Nada nesse período.").foregroundStyle(Tema.suave).linhaSolta(topo: 16)
         }
     }
 
     private func avisoView(_ a: Aviso) -> some View {
         Label(a.texto, systemImage: a.erro ? "exclamationmark.triangle" : "checkmark.circle")
             .font(.footnote)
-            .foregroundStyle(a.erro ? Color.red : Color.secondary)
+            .foregroundStyle(a.erro ? Tema.negativo : Tema.suave)
     }
 
     // MARK: Ações
@@ -225,21 +279,22 @@ struct LinhaTransacao: View {
     var body: some View {
         HStack(alignment: .firstTextBaseline, spacing: 12) {
             VStack(alignment: .leading, spacing: 2) {
-                Text(transacao.descricao).lineLimit(2)
+                Text(transacao.descricao).lineLimit(2).foregroundStyle(Tema.tinta)
                 HStack(spacing: 6) {
                     Text(transacao.categoriaExibida)
                     Text("·")
                     Text(transacao.conta).lineLimit(1)
                     if transacao.pendente { Text("· pendente") }
                 }
-                .font(.caption)
-                .foregroundStyle(.secondary)
+                .font(.footnote)
+                .foregroundStyle(Tema.suave)
             }
             Spacer()
             Text(Formatos.reais(transacao.valor))
                 .monospacedDigit()
-                .foregroundStyle(transacao.entrada ? Color.green : transacao.pagamentoDeFatura ? Color.secondary : Color.primary)
+                .foregroundStyle(transacao.entrada ? Tema.positivo : transacao.pagamentoDeFatura ? Tema.suave : Tema.tinta)
         }
+        .frame(minHeight: 56)
         .accessibilityElement(children: .combine)
     }
 }

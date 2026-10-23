@@ -72,6 +72,8 @@ struct EditarTarefaView: View {
                     }
                 }
             }
+            .fundoTomoshibi()
+            .tint(Tema.destaque)
             .navigationTitle(tarefa == nil ? "Nova tarefa" : "Editar")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

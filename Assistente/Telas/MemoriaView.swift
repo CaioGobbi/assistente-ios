@@ -33,6 +33,7 @@ struct MemoriaView: View {
                 }
             }
         }
+        .fundoTomoshibi()
         .navigationTitle("Memória")
         .toolbar { if !lembrancas.isEmpty { EditButton() } }
     }

@@ -36,7 +36,7 @@ struct AjustesView: View {
                     NavigationLink {
                         MemoriaView()
                     } label: {
-                        Label("O que ele sabe de você", systemImage: "brain")
+                        Label("O que o Tomoshibi sabe de você", systemImage: "brain")
                     }
                 }
 
@@ -73,6 +73,8 @@ struct AjustesView: View {
                     Text("Além disso, cada tarefa com horário avisa na hora.")
                 }
             }
+            .fundoTomoshibi()
+            .safeAreaInset(edge: .bottom, spacing: 0) { Color.clear.frame(height: Tema.alturaBarra) }
             .navigationTitle("Ajustes")
             .onChange(of: chave) { _, valor in
                 Keychain.salvar(valor.trimmingCharacters(in: .whitespacesAndNewlines), conta: Keychain.contaAPI)

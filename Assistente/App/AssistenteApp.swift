@@ -8,6 +8,10 @@ struct AssistenteApp: App {
     @Environment(\.scenePhase) private var scenePhase
     @State private var assistente = Assistente(context: Persistencia.container.mainContext)
 
+    init() {
+        Tema.configurarAparencia()
+    }
+
     var body: some Scene {
         WindowGroup {
             RaizView()
